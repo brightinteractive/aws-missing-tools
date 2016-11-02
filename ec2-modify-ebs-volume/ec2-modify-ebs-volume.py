@@ -279,14 +279,8 @@ def wait_aws_event(object_in, object_type, wait_for_string):
     return object_status
 
 
-# creates ec2_connection object
-try:
-    ec2_connection = ec2.connect_to_region('us-east-1')
-except:
-    logging.critical('An error occured when attempting to connect to the AWS API.')
-    exit(1)
 # aws_regions contains a list of strings representing AWS regions
-aws_regions = [ (str(region.name)) for region in ec2_connection.get_all_regions() ]
+aws_regions = [ (str(region.name)) for region in ec2.regions() ]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', default='root',
@@ -313,9 +307,17 @@ log_format = '%(message)s'
 log_level = str.upper(args.log_level)
 logging.basicConfig(level=log_level, format=log_format)
 
-region = args.region
+region = ec2.get_region(args.region)
 instance_id = args.instance_id
 device = args.device
+
+# creates ec2_connection object
+try:
+    ec2_connection = ec2.EC2Connection(region=region)
+except Exception as e:
+    print str(e)
+    logging.critical('An error occured when attempting to connect to the AWS API.')
+    exit(1)
 
 # gets an instance object corresponding to the instance_id
 selected_instance = get_selected_instances(instance_id)
